@@ -1,0 +1,74 @@
+#install necessary module
+!pip install torch
+
+#imports
+import numpy as np
+import json
+
+#read in file with json
+filePath = '/content/QA_Reason.json'
+with open(filePath, 'r', encoding= 'utf-8') as json_file:
+    data = json.load(json_file)
+
+#create list and append items in data to list and print to ensure correct execution
+newData = []
+for image, statement in data.items():
+    entry = {'image': image, 'statement': statement}
+    newData.append(entry)
+
+for item in newData:
+  print(item['statement'])
+
+#imports
+from collections import Counter
+import pandas as pd
+import spacy
+
+#define the natural lang. processor
+nlp = spacy.load("en_core_web_sm")
+
+#functions to extract adjectives and nouns
+def extractAdj(statement):
+    doc = nlp(statement)
+    adjectives = [token.text for token in doc if token.pos_ == 'ADJ']
+    return adjectives
+
+def extractNoun(statement):
+    doc= nlp(statement)
+    nouns= [token.text for token in doc if token.pos_ == 'NOUN']
+    return nouns
+
+#dictionary to put data in
+globalDict={}
+
+#define and code into dictionary
+for item in newData:
+    image = item['image']
+    statements = item['statement']
+    if image not in globalDict:
+      globalDict[image] = {'adjectives':[]}
+
+    print('---------------------')
+    print(f"Image: {image}")
+
+    for statement in statements:
+        adjectives = extractAdj(statement)
+        nouns = extractNoun(statement)
+        globalDict[image]['adjectives'].extend(adjectives)
+
+        print(f"Adjectives: {adjectives}")
+        print(f"Nouns: {nouns}")
+        print()
+#import
+import pandas as pd
+
+#put dictionary into data frame
+df = pd.DataFrame.from_dict(globalDict, orient='index')
+print(df)
+df_exploded = df.explode('adjectives')
+
+#import to excel
+excel_file_path = 'imageData.xlsx'
+df_exploded.to_excel(excel_file_path, index=True)
+from google.colab import files
+files.download(excel_file_path)
