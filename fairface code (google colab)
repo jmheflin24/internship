@@ -1,0 +1,60 @@
+#install module
+!pip install deepface
+
+#imports needed
+from deepface import DeepFace
+import cv2
+import matplotlib.pyplot as plt
+import os
+
+#pick an img to use for testing
+img1= cv2.imread('/content/MEWoman.jpg')
+plt.imshow(img1[:,:,::-1])
+plt.show()
+
+result = DeepFace.analyze(img1, actions=['race', 'gender'])
+print(result)
+
+#get file needed from folders
+!wget https://storage.googleapis.com/ads-dataset/subfolder-10.zip
+!unzip subfolder-10.zip
+
+#main part of code
+directory = '10' #try hardcoding with a single image
+#read in imag img1= cv2.imread('/content/MEWoman.jpg')
+
+show_max = 1000
+show_ctr = 0
+
+file_paths = []
+races = []
+genders = []
+
+for filename in os.listdir(directory):
+    if ((filename.endswith(".jpg") or filename.endswith(".png")) and (show_ctr < show_max)):
+        image_path = os.path.join(directory, filename)
+        img2= cv2.imread(image_path)
+        #cap show_max off at maybe 3-5 for testing
+        try:
+            print(image_path)
+            result = DeepFace.analyze(img2, actions=['race', 'gender'])
+            plt.imshow(img2[:,:,::-1])
+            plt.show()
+            print(result)
+            show_ctr +=1
+            file_paths.append(image_path)
+            races.append(result[0]['dominant_race'])
+            genders.append(result[0]["dominant_gender"]) #play around with these and see what 0,1 means
+        except:
+            print("Error analyzing", image_path)
+
+#print length of lists to ensure proper code execution
+print(len(file_paths))
+print(len(races))
+print(len(genders))
+
+#save to table to import to excel
+import pandas as pd
+data = {'File_Path': file_paths, 'Race': races, 'Gender': genders}
+df = pd.DataFrame(data)
+print(df)
